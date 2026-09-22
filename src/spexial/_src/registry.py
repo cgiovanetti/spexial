@@ -439,6 +439,35 @@ _ROWS: Final = (
         ),
     ),
     Coverage(
+        name="spherical_jn",
+        jax_name=None,
+        jax_since=None,
+        jax_support=Support.NONE,
+        scipy_array_api=Support.NONE,
+        status=Status.UNIQUE,
+        custom_jvp=True,
+        derivative="(n j_{n-1}(z) - (n+1) j_{n+1}(z)) / (2n+1)",
+        cost=None,
+        notes=(
+            "JAX has only the cylindrical `bessel_jn`, and scipy's does not "
+            "dispatch on JAX arrays. Upward recurrence, with values below the "
+            "turning point smaller than about 1e-9 set to zero. The derivative "
+            "rule is regular at z = 0. Contributed from ABCMB."
+        ),
+    ),
+    Coverage(
+        name="spherical_jn_all",
+        jax_name=None,
+        jax_since=None,
+        jax_support=Support.NONE,
+        scipy_array_api=Support.NONE,
+        status=Status.UNIQUE,
+        custom_jvp=True,
+        derivative="(l j_{l-1}(z) - (l+1) j_{l+1}(z)) / (2l+1)",
+        cost=None,
+        notes="Every order up to n from one recurrence. Contributed from ABCMB.",
+    ),
+    Coverage(
         name="incomplete_beta",
         jax_name=None,
         jax_since=None,
