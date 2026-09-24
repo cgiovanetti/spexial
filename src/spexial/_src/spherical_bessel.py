@@ -35,7 +35,7 @@ def _j0(x: AnyArray) -> AnyArray:
     return jnp.where(x == 0.0, 1.0, jnp.sin(safe) / safe)
 
 
-def _j1(x: AnyArray) -> AnyArray:
+def _j1(x: AnyArray, /) -> AnyArray:
     x2 = x * x
     small = x2 < 1e-2  # `sin x - x cos x` cancels; use the series
     safe = jnp.where(small, 1.0, x)
