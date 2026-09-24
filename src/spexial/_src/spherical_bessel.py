@@ -22,9 +22,8 @@ def _xmin(orders: np.ndarray, cutoff: float) -> np.ndarray:
     nu = orders + 0.5
     lhs = np.log(cutoff * nu) / nu
     alpha = (
-        -2.0
+        -0.4
         * lhs
-        / 5.0
         * (1.0 + 2.0 * np.cosh(np.arccosh(1.0 + 375.0 / (16.0 * lhs * lhs)) / 3.0))
     )
     return nu / np.cosh(alpha)
