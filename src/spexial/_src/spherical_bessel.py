@@ -2,8 +2,9 @@
 
 __all__ = ["spherical_jn", "spherical_jn_all"]
 
+import operator
 from functools import partial
-from typing import Any, Final
+from typing import Any, Final, TypeAlias
 
 import jax
 import jax.numpy as jnp
@@ -15,6 +16,11 @@ from .dtype import as_float, cast_like
 
 _CUTOFF: Final = 2e-10
 """Threshold of the `_xmin` estimate."""
+
+_UNROLL: Final = 8
+"""Recurrence steps per loop iteration: 3-15x faster on CPU and A100."""
+
+_Carry: TypeAlias = tuple[AnyArray, AnyArray]
 
 
 def _xmin(orders: np.ndarray, cutoff: float) -> np.ndarray:
@@ -57,8 +63,8 @@ def _rows(lo: int, hi: int, x: AnyArray) -> AnyArray:
     inv_x = 1.0 / jnp.where(x < xmin[0], 1.0, x)  # every row is 0 there
 
     def step(
-        carry: tuple[AnyArray, AnyArray], order_xmin: tuple[AnyArray, AnyArray]
-    ) -> tuple[tuple[AnyArray, AnyArray], AnyArray]:
+        carry: _Carry, order_xmin: tuple[AnyArray, AnyArray]
+    ) -> tuple[_Carry, AnyArray]:
         prev, cur = carry
         order, xmin_l = order_xmin
         keep = x >= xmin_l
@@ -69,9 +75,12 @@ def _rows(lo: int, hi: int, x: AnyArray) -> AnyArray:
     k = max(lo - 2, 0)
     if k:  # advance to `lo` without keeping the rows
         carry, _ = lax.scan(
-            lambda c, s: (step(c, s)[0], None), carry, (orders[:k], xmin[:k])
+            lambda c, s: (step(c, s)[0], None),
+            carry,
+            (orders[:k], xmin[:k]),
+            unroll=_UNROLL,
         )
-    _, rows = lax.scan(step, carry, (orders[k:], xmin[k:]))
+    _, rows = lax.scan(step, carry, (orders[k:], xmin[k:]), unroll=_UNROLL)
     if lo >= 2:
         return rows
     return jnp.concatenate([jnp.stack([j0, j1][lo:]), rows])
@@ -114,27 +123,33 @@ def _evaluate(lo: int, hi: int, z: AnyArrayLike, *, derivative: bool) -> AnyArra
     return _derivative(lo, hi, z)[1] if derivative else _band(lo, hi, z)
 
 
-def _validate(n: int, z: AnyArrayLike) -> None:
+def _validate(n: int, z: AnyArrayLike) -> int:
+    n = operator.index(n)
     if n < 0:
         msg = f"order n must be >= 0, got {n}"
         raise ValueError(msg)
     if jnp.iscomplexobj(z):
         msg = f"only real z is supported, got dtype {jnp.asarray(z).dtype}"
         raise ValueError(msg)
+    return n
 
 
 def spherical_jn(
     n: int,
     z: AnyArrayLike,
     *,
-    derivative: bool = False,  # noqa: FBT001, FBT002 -- scipy's signature
+    derivative: bool = False,
 ) -> AnyArray:
     r"""Compute the spherical Bessel function of the first kind, :math:`j_n(z)`.
 
     Equivalent to ``scipy.special.spherical_jn`` for real ``z``. Computed by
     upward recurrence from :math:`j_0` and :math:`j_1`. The recurrence is
     unstable below the turning point :math:`|z| \approx n`, so there values
-    smaller than about :math:`10^{-9}` are returned as exactly zero.
+    smaller than about :math:`10^{-6}` of the peak are unreliable in sign and
+    magnitude, and those far enough below it are returned as exactly zero.
+
+    Each ``n`` compiles separately. For many orders at the same ``z``, use
+    `spherical_jn_all`, which computes them all at once.
 
     Parameters
     ----------
@@ -171,7 +186,7 @@ def spherical_jn(
     0.333333333333
 
     """
-    _validate(n, z)
+    n = _validate(n, z)
     return _evaluate(n, n, z, derivative=bool(derivative))[0]
 
 
@@ -179,7 +194,7 @@ def spherical_jn_all(
     n: int,
     z: AnyArrayLike,
     *,
-    derivative: bool = False,  # noqa: FBT001, FBT002 -- as `spherical_jn`
+    derivative: bool = False,
 ) -> AnyArray:
     r"""Return :math:`j_l(z)` for every order ``l = 0 ... n``.
 
@@ -208,5 +223,5 @@ def spherical_jn_all(
     [0.454648713413, 0.43539777498, 0.198447949057, 0.060722097663]
 
     """
-    _validate(n, z)
+    n = _validate(n, z)
     return _evaluate(0, n, z, derivative=bool(derivative))

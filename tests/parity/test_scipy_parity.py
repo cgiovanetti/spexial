@@ -383,7 +383,7 @@ def test_spherical_jn(derivative, n, z):
     # j_{n-1} - (n+1) j_n / z, loses the second term: it returns 1 for j_1'
     # where the true limit is 1/3, which is what the series here gives.
     assume(not derivative or abs(z) > 1e-200)
-    got = float(sp.spherical_jn(n, z, derivative))
+    got = float(sp.spherical_jn(n, z, derivative=derivative))
     err = abs(got - scipy_spherical_jn(n, z, derivative))
     assert err <= 5e-7 * _peak(n, derivative=derivative)
     if abs(z) >= n:

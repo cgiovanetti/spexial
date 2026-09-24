@@ -450,9 +450,10 @@ _ROWS: Final = (
         cost=None,
         notes=(
             "JAX has only the cylindrical `bessel_jn`, and scipy's does not "
-            "dispatch on JAX arrays. Upward recurrence, with values below the "
-            "turning point smaller than about 1e-9 set to zero. The derivative "
-            "rule is regular at z = 0. Contributed from ABCMB."
+            "dispatch on JAX arrays. Upward recurrence; below the turning point, "
+            "values smaller than about 1e-6 of the peak are unreliable, and those "
+            "far below it are set to zero. The derivative rule is regular at "
+            "z = 0. Contributed from [ABCMB](https://github.com/TonyZhou729/ABCMB)."
         ),
     ),
     Coverage(
@@ -465,7 +466,10 @@ _ROWS: Final = (
         custom_jvp=True,
         derivative="(l j_{l-1}(z) - (l+1) j_{l+1}(z)) / (2l+1)",
         cost=None,
-        notes="Every order up to n from one recurrence. Contributed from ABCMB.",
+        notes=(
+            "Every order up to n from one recurrence. Contributed from "
+            "[ABCMB](https://github.com/TonyZhou729/ABCMB)."
+        ),
     ),
     Coverage(
         name="incomplete_beta",

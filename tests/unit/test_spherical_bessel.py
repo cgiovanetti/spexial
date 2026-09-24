@@ -131,8 +131,10 @@ def test_shapes():
 
 @pytest.mark.parametrize("fn", [sp.spherical_jn, sp.spherical_jn_all])
 def test_rejects_bad_input(fn):
-    """Negative orders and complex ``z`` raise."""
+    """Negative or non-integer orders and complex ``z`` raise."""
     with pytest.raises(ValueError, match="n must be >= 0"):
         fn(-1, 1.0)
+    with pytest.raises(TypeError):
+        fn(2.0, 1.0)
     with pytest.raises(ValueError, match="only real z"):
         fn(2, jnp.asarray(1.0 + 1.0j))
