@@ -126,6 +126,7 @@ def _validate(n: int, z: AnyArrayLike) -> None:
 def spherical_jn(
     n: int,
     z: AnyArrayLike,
+    *,
     derivative: bool = False,  # noqa: FBT001, FBT002 -- scipy's signature
 ) -> AnyArray:
     r"""Compute the spherical Bessel function of the first kind, :math:`j_n(z)`.
