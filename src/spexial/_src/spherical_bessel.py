@@ -178,6 +178,7 @@ def spherical_jn(
 def spherical_jn_all(
     n: int,
     z: AnyArrayLike,
+    *,
     derivative: bool = False,  # noqa: FBT001, FBT002 -- as `spherical_jn`
 ) -> AnyArray:
     r"""Return :math:`j_l(z)` for every order ``l = 0 ... n``.
