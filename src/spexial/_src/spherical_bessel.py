@@ -29,7 +29,7 @@ def _xmin(orders: np.ndarray, cutoff: float) -> np.ndarray:
     return nu / np.cosh(alpha)
 
 
-def _j0(x: AnyArray) -> AnyArray:
+def _j0(x: AnyArray, /) -> AnyArray:
     safe = jnp.where(x == 0.0, 1.0, x)
     return jnp.where(x == 0.0, 1.0, jnp.sin(safe) / safe)
 
