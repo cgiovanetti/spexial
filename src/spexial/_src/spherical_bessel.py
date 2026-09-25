@@ -18,7 +18,8 @@ _CUTOFF: Final = 2e-10
 """Threshold of the `_xmin` estimate."""
 
 _UNROLL: Final = 8
-"""Recurrence steps per loop iteration: 3-15x faster on CPU and A100."""
+"""Recurrence steps per loop iteration. Against 1: 4-15x faster on an A100 and
+2-4x on CPU, for about 30% more compile time per ``n``."""
 
 _Carry: TypeAlias = tuple[AnyArray, AnyArray]
 
@@ -42,14 +43,14 @@ def _j0(x: AnyArray, /) -> AnyArray:
 
 def _j1(x: AnyArray, /) -> AnyArray:
     x2 = x * x
-    small = x2 < 1e-2  # `sin x - x cos x` cancels; use the series
+    small = x2 < 1e-2  # `sin x / x - cos x` cancels; use the series
     safe = jnp.where(small, 1.0, x)
     series = (
         x
         / 3.0
         * (1.0 - x2 / 10.0 + x2**2 / 280.0 - x2**3 / 15120.0 + x2**4 / 1330560.0)
     )
-    return jnp.where(small, series, (jnp.sin(safe) - safe * jnp.cos(safe)) / safe**2)
+    return jnp.where(small, series, (jnp.sin(safe) / safe - jnp.cos(safe)) / safe)
 
 
 def _rows(lo: int, hi: int, x: AnyArray) -> AnyArray:
@@ -137,15 +138,15 @@ def _validate(n: int, z: AnyArrayLike) -> int:
 def spherical_jn(
     n: int,
     z: AnyArrayLike,
-    *,
-    derivative: bool = False,
+    derivative: bool = False,  # noqa: FBT001, FBT002 -- scipy's signature
 ) -> AnyArray:
     r"""Compute the spherical Bessel function of the first kind, :math:`j_n(z)`.
 
     Equivalent to ``scipy.special.spherical_jn`` for real ``z``. Computed by
     upward recurrence from :math:`j_0` and :math:`j_1`. The recurrence is
     unstable below the turning point :math:`|z| \approx n`, so there values
-    smaller than about :math:`10^{-6}` of the peak are unreliable in sign and
+    smaller than about :math:`10^{-6}` of the peak (for :math:`n \le 10^4`,
+    growing roughly as :math:`n^{5/6}` beyond) are unreliable in sign and
     magnitude, and those far enough below it are returned as exactly zero.
 
     Each ``n`` compiles separately. For many orders at the same ``z``, use
@@ -193,8 +194,7 @@ def spherical_jn(
 def spherical_jn_all(
     n: int,
     z: AnyArrayLike,
-    *,
-    derivative: bool = False,
+    derivative: bool = False,  # noqa: FBT001, FBT002 -- as `spherical_jn`
 ) -> AnyArray:
     r"""Return :math:`j_l(z)` for every order ``l = 0 ... n``.
 

@@ -32,6 +32,16 @@ def test_matches_the_closed_forms():
     )
 
 
+def test_j1_small_argument():
+    """`j_1` on [1e-3, 1] against its power series (DLMF 10.53.1), relatively."""
+    x = np.geomspace(1e-3, 1.0, 200)
+    series = x * sum(
+        (-x * x / 2) ** k / (factorial(k) * np.prod(np.arange(2 * k + 3, 0, -2.0)))
+        for k in range(20)
+    )
+    np.testing.assert_allclose(sp.spherical_jn(1, jnp.asarray(x)), series, rtol=1e-13)
+
+
 def _assert_agrees(a, b, z, n):
     """Two routes to the same values agree, to the accuracy the docstring claims.
 
