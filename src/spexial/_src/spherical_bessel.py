@@ -165,7 +165,8 @@ def spherical_jn(
     -------
     Array
         Value(s) of :math:`j_n(z)` or :math:`j_n'(z)`. For :math:`|z| \ge n` the
-        error is below 1e-12 of :math:`\sqrt{j_n^2 + y_n^2}`. Below the turning
+        error is below 1e-12 of :math:`\sqrt{j_n^2 + y_n^2}` for
+        :math:`n \le 10^4`, growing roughly as :math:`n` beyond. Below the turning
         point it is absolute: below 1e-6 of :math:`\max_z |j_n(z)|` for
         :math:`n \le 10^4`, and 3e-6 of :math:`\max_z |j_n'(z)|` for the
         derivative.
